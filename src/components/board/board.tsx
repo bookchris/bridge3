@@ -18,7 +18,6 @@ import { Play } from "./playCard";
 import { PlayerBox } from "./playerBox";
 import { usePosition } from "./position";
 import { ScoreBox } from "./scoreBox";
-import { SetCard } from "./setCard";
 import { Trick } from "./trick";
 
 interface BoardContextType {
@@ -84,7 +83,6 @@ export function Board({ hand, allHands, live, playingAs }: BoardProps) {
     [width, hand, handAt, playingAs, position, setPosition]
   );
 
-  const setCard = <>{set && <SetCard hand={hand} set={set} />}</>;
   const right = (
     <>
       <Controls hand={hand} position={position} setPosition={setPosition} />
@@ -113,9 +111,7 @@ export function Board({ hand, allHands, live, playingAs }: BoardProps) {
                 gap: 2,
                 minWidth: 400,
               }}
-            >
-              {setCard}
-            </Box>
+            ></Box>
           )}
           <Box
             sx={{
@@ -153,7 +149,6 @@ export function Board({ hand, allHands, live, playingAs }: BoardProps) {
                 <ScoreBox hand={handAt} />
               )}
             </Paper>
-            {!isLg && setCard}
             {!isLg && right}
           </Box>
           {isLg && (
@@ -166,7 +161,6 @@ export function Board({ hand, allHands, live, playingAs }: BoardProps) {
               }}
             >
               {right}
-              {isLg && !isXl && setCard}
             </Box>
           )}
         </Box>
@@ -189,7 +183,7 @@ export interface MiniBoardProps {
   onClick?: () => void;
 }
 
-export function MiniBoard({ hand, onClick = () => {} }: MiniBoardProps) {
+export function MiniBoard({ hand, onClick = () => null }: MiniBoardProps) {
   const width = 250;
   const value = useMemo(
     () => ({
@@ -198,7 +192,7 @@ export function MiniBoard({ hand, onClick = () => {} }: MiniBoardProps) {
       hand: hand,
       handAt: hand,
       position: hand.positions,
-      setPosition: () => {},
+      setPosition: () => null,
     }),
     [width, hand]
   );

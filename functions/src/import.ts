@@ -22,8 +22,11 @@ export const importHand = functions.https.onCall(
     let hand: Hand;
     try {
       hand = Hand.fromLin(input);
-    } catch (err: any) {
-      throw new functions.https.HttpsError("invalid-argument", err.message);
+    } catch (err: unknown) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        errorToString(err)
+      );
     }
     const ref = db.collection("hands").withConverter(handConverter).doc();
     await ref.set(new StoredHand(hand, { id: ref.id, uids: [uid] }));
@@ -31,3 +34,7 @@ export const importHand = functions.https.onCall(
     return resp;
   }
 );
+
+function errorToString(err: unknown) {
+  return err instanceof Error ? err.message : "unknown error";
+}

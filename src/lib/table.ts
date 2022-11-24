@@ -79,7 +79,7 @@ export function useBid(tableId?: string) {
 
   }, []);
   */
-  return useCallback((bid: Bid, seat: Seat) => {}, []);
+  return useCallback((bid: Bid, seat: Seat) => null, []);
 }
 
 export class Table extends Hand {
