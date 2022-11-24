@@ -4,6 +4,7 @@
     "indexes": "firestore.indexes.json"
   },
   "functions": {
+    "codebase": "ui",
     "ignore": [
       "node_modules",
       ".git",
@@ -17,11 +18,7 @@
   },
   "hosting": {
     "public": "public",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
         "source": "**",

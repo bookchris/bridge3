@@ -1,5 +1,6 @@
-import * as functions from "firebase-functions";
+import { importHand } from "./import";
 
+exports.importHand = importHand;
 // // Start writing Firebase Functions
 // // https://firebase.google.com/docs/functions/typescript
 //
