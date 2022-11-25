@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   ImportHandRequest,
   ImportHandResponse,
-} from "../../functions/api/importHand";
+} from "../../functions/api/import";
 import AuthCheck from "../components/authCheck";
 import { functions } from "../lib/firebase";
 import useCallable from "../lib/useCallable";

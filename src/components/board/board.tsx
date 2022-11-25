@@ -35,14 +35,13 @@ export const useBoardContext = () => useContext(BoardContext);
 
 export interface BoardProps {
   hand: Hand;
-  allHands?: Hand[];
   live?: boolean;
   analysis?: boolean;
   position?: number;
   playingAs?: Seat;
 }
 
-export function Board({ hand, allHands, live, playingAs }: BoardProps) {
+export function Board({ hand, live, playingAs }: BoardProps) {
   const { position, setPosition } = usePosition(hand);
   const readOnly = position !== hand.positions || !live || !playingAs;
 
@@ -55,20 +54,6 @@ export function Board({ hand, allHands, live, playingAs }: BoardProps) {
   const [width] = useSize(ref);
 
   const handAt = hand.atPosition(position);
-
-  const set = useMemo(
-    () =>
-      allHands
-        ?.filter((h) => h.players[0].toString() === hand.players[0].toString())
-        .slice()
-        .sort((a, b) => a.board - b.board),
-    [allHands, hand]
-  );
-
-  const variations = useMemo(
-    () => allHands?.filter((h) => h.board === hand.board),
-    [allHands, hand]
-  );
 
   const value = useMemo(
     () => ({

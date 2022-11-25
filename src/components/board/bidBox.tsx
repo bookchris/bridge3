@@ -1,7 +1,6 @@
 import { Box, Button, ButtonProps, Icon, Paper } from "@mui/material";
 import { useState } from "react";
 import { Bid, Hand, Seat } from "../../../functions/core";
-import { useBid } from "../../lib/table";
 import { useTableContext } from "./table";
 
 export interface BidBoxProps {
@@ -31,11 +30,11 @@ export function BidBox({ hand, seat }: BidBoxProps) {
 function BidSelector({ hand, bidder }: { hand: Hand; bidder: Seat }) {
   const [level, setLevel] = useState(0);
 
-  const { table } = useTableContext();
-  const bid = useBid(table?.id);
+  const { bid } = useTableContext();
+  if (!bid) throw new Error("No bid functions defined");
   const bidAs = (b: Bid) => {
     setLevel(0);
-    bid(b, bidder);
+    bid(b);
   };
 
   const isValid = (b: Bid) => hand.canBid(b, bidder);

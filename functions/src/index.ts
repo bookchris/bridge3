@@ -1,10 +1,10 @@
-import { importHand } from "./import";
+import { importhand } from "./import";
+import { robot } from "./robot";
+import { createtable, tablebid } from "./table";
 
-exports.importHand = importHand;
-// // Start writing Firebase Functions
-// // https://firebase.google.com/docs/functions/typescript
-//
-// export const helloWorld = functions.https.onRequest((request, response) => {
-//   functions.logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+exports.importhand = importhand;
+
+exports.createtable = createtable;
+exports.tablebid = tablebid;
+
+exports.robot = robot;

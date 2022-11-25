@@ -1,4 +1,4 @@
-import { Functions, httpsCallable } from "firebase/functions";
+import { Functions, httpsCallableFromURL } from "firebase/functions";
 import { useCallback, useState } from "react";
 
 export type HttpsCallableHook<
@@ -17,9 +17,9 @@ export default <RequestData = unknown, ResponseData = unknown>(
 
   const callCallable = useCallback(
     async (data: RequestData): Promise<ResponseData> => {
-      const callable = httpsCallable<RequestData, ResponseData>(
+      const callable = httpsCallableFromURL<RequestData, ResponseData>(
         functions,
-        name
+        `https://${name}-wrqv6ob42a-uc.a.run.app/${name}`
       );
       setLoading(true);
       setError(undefined);

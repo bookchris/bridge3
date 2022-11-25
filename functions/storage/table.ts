@@ -13,4 +13,12 @@ export class Table extends Hand {
     this.uids = props.uids;
     this.created = props.created;
   }
+
+  updateHand(hand: Hand) {
+    return new Table(hand, {
+      id: this.id,
+      uids: this.uids,
+      created: this.created,
+    });
+  }
 }

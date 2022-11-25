@@ -1,16 +1,15 @@
 import { firestore } from "firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
 import { Hand } from "../../core";
-import { StoredHand } from "../../storage/hand";
 import { Table } from "../../storage/table";
 
 export const tableConverter: FirebaseFirestore.FirestoreDataConverter<Table> = {
-  toFirestore(hand: StoredHand): FirebaseFirestore.DocumentData {
+  toFirestore(table: Table): FirebaseFirestore.DocumentData {
     return {
-      ...hand.toJson(),
-      uids: hand.uids,
-      created: hand.created
-        ? Timestamp.fromDate(hand.created)
+      ...table.toJson(),
+      uids: table.uids,
+      created: table.created
+        ? Timestamp.fromDate(table.created)
         : firestore.FieldValue.serverTimestamp(),
     };
   },

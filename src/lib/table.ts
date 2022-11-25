@@ -14,8 +14,10 @@ import {
   useCollectionData,
   useDocumentData,
 } from "react-firebase-hooks/firestore";
-import { Bid, Hand, Seat } from "../../functions/core";
-import { firestore } from "./firebase";
+import { TableBidRequest, TableBidResponse } from "../../functions/api/table";
+import { Bid, Hand } from "../../functions/core";
+import { firestore, functions } from "./firebase";
+import useCallable, { HttpsCallableHook } from "./useCallable";
 import { useUserContext } from "./user";
 
 const tableConverter: FirestoreDataConverter<Table> = {
@@ -59,27 +61,16 @@ export function useMyTableList() {
   return useCollectionData<Table>(ref);
 }
 
-export function useBid(tableId?: string) {
-  const { user } = useUserContext();
-  const userId = user?.uid;
-  /*
-  const { run } = useBid(`/api/table/${tableId}:bid`, {
-    bid: bid,
-      body: JSON.stringify({ input: input }),
-    })
-      .then(async (resp: Response) => {
-        if (resp.status !== 200) {
-          const err = await resp.json();
-          throw new Error(err.err || "unknown server error");
-        }
-        const { id }: { id: string } = await resp.json();
-        router.push("/hands/" + id);
-      })
-      .catch(setError);
-
-  }, []);
-  */
-  return useCallback((bid: Bid, seat: Seat) => null, []);
+export function useBid(tableId: string): HttpsCallableHook<Bid, void> {
+  const [internalRun, inProgress, error] = useCallable<
+    TableBidRequest,
+    TableBidResponse
+  >(functions, "tablebid");
+  const run = useCallback(
+    (bid: Bid) => internalRun({ tableId: tableId, bid: bid.toJson() }),
+    [internalRun, tableId]
+  );
+  return [run, inProgress, error];
 }
 
 export class Table extends Hand {

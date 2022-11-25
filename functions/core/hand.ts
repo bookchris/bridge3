@@ -375,7 +375,7 @@ export class Hand {
     return -1;
   }
 
-  atPosition(pos: number) {
+  atPosition(pos: number): Hand {
     if (pos < 0) {
       return this;
     }
@@ -438,9 +438,9 @@ export class Hand {
     return this.contract.canBid(bid);
   }
 
-  doBid(bid: Bid, seat: Seat) {
+  doBid(bid: Bid, seat: Seat): Hand {
     if (!this.canBid(bid, seat)) {
-      return undefined;
+      throw new Error(`Cannot bid ${bid} in seat ${seat}`);
     }
     return new Hand({
       ...this,
@@ -468,9 +468,9 @@ export class Hand {
     return true;
   }
 
-  doPlay(card: Card, seat: Seat) {
+  doPlay(card: Card, seat: Seat): Hand {
     if (!this.canPlay(card, seat)) {
-      return undefined;
+      throw new Error(`Cannot player card ${card} in seat ${seat}`);
     }
     return new Hand({
       ...this,

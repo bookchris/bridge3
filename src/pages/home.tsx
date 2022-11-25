@@ -10,16 +10,21 @@ import {
   useTheme,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
-import { useState } from "react";
 import { useErrorHandler } from "react-error-boundary";
 import { useNavigate } from "react-router-dom";
+import {
+  CreateTableRequest,
+  CreateTableResponse,
+} from "../../functions/api/table";
 import AuthCheck from "../components/authCheck";
 import { CardStack } from "../components/cardStack";
 import { HandCard } from "../components/handCard";
 import Loading from "../components/loading";
 import { TableCard } from "../components/tableCard";
+import { functions } from "../lib/firebase";
 import { useHandList } from "../lib/hand";
 import { useMyTableList } from "../lib/table";
+import useCallable from "../lib/useCallable";
 import { signIn, useUserContext, useUserId } from "../lib/user";
 
 export default function HomePage() {
@@ -46,35 +51,17 @@ const QuickPlayButton = ({ sx, ...props }: ButtonProps) => (
 
 function QuickPlay() {
   const navigate = useNavigate();
-  const errorHandler = useErrorHandler();
 
   const { enqueueSnackbar } = useSnackbar();
   const notImplemented = () => enqueueSnackbar("Sorry, not implemented yet");
 
-  const [inProgress, setInProgress] = useState(false);
+  const [createTable, , error] = useCallable<
+    CreateTableRequest,
+    CreateTableResponse
+  >(functions, "createtable");
+  useErrorHandler(error);
+
   const { user, username } = useUserContext();
-
-  const justPlay = async () => {
-    setInProgress(true);
-    fetch("/api/table", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: (await user?.getIdToken()) || "",
-      },
-      body: JSON.stringify({ mode: "solitaire" }),
-    })
-      .then(async (resp: Response) => {
-        if (resp.status !== 200) {
-          const err = await resp.json();
-          throw new Error(err.err || "unknown server error");
-        }
-        const { id }: { id: string } = await resp.json();
-        navigate("/tables/" + id);
-      })
-      .catch(errorHandler);
-  };
-
   const needLogin = (func: () => void) => {
     return () => {
       if (!user || !username) {
@@ -101,7 +88,13 @@ function QuickPlay() {
           </Box>
           <Typography sx={{ mt: 2 }}>Play with a robot</Typography>
           <Box sx={{ display: "flex", gap: 3 }}>
-            <QuickPlayButton onClick={needLogin(justPlay)}>
+            <QuickPlayButton
+              onClick={needLogin(() =>
+                createTable({ mode: "solitaire" }).then(({ id }) =>
+                  navigate("/tables/" + id)
+                )
+              )}
+            >
               Just play
             </QuickPlayButton>
             <QuickPlayButton onClick={notImplemented}>
@@ -115,7 +108,7 @@ function QuickPlay() {
 }
 
 function MyTables() {
-  const [tables, _, error] = useMyTableList();
+  const [tables, , error] = useMyTableList();
   useErrorHandler(error);
 
   if (!tables) return <Loading />;
@@ -133,7 +126,8 @@ function MyTables() {
 
 function MyHands() {
   const userId = useUserId();
-  const [hands, _, error] = useHandList(userId!);
+  if (!userId) throw new Error("missing userId");
+  const [hands, , error] = useHandList(userId);
   useErrorHandler(error);
 
   if (!hands) return <Loading />;
