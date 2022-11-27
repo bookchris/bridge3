@@ -438,9 +438,9 @@ export class Hand {
     return this.contract.canBid(bid);
   }
 
-  doBid(bid: Bid, seat: Seat): Hand {
+  doBid(bid: Bid, seat: Seat): Hand | undefined {
     if (!this.canBid(bid, seat)) {
-      throw new Error(`Cannot bid ${bid} in seat ${seat}`);
+      return undefined;
     }
     return new Hand({
       ...this,
@@ -450,10 +450,16 @@ export class Hand {
 
   canPlay(card: Card, seat: Seat) {
     if (!this.isPlaying) return false;
-    if (this.player != seat) return false;
 
-    // TODO: fix who plays the dummy when delcaring.
-    const holding = this.getHolding(seat);
+    const player = this.player;
+    if (!player) return false;
+
+    if (this.isDummy(player)) {
+      seat = seat.partner();
+    }
+    if (player != seat) return false;
+
+    const holding = this.getHolding(player);
     if (!holding.find((c) => c.id === card.id)) return false;
 
     const lastTrick = this.tricks.at(-1);
@@ -468,9 +474,9 @@ export class Hand {
     return true;
   }
 
-  doPlay(card: Card, seat: Seat): Hand {
+  doPlay(card: Card, seat: Seat): Hand | undefined {
     if (!this.canPlay(card, seat)) {
-      throw new Error(`Cannot player card ${card} in seat ${seat}`);
+      return undefined;
     }
     return new Hand({
       ...this,

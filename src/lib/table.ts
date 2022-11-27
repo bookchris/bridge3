@@ -14,14 +14,19 @@ import {
   useCollectionData,
   useDocumentData,
 } from "react-firebase-hooks/firestore";
-import { TableBidRequest, TableBidResponse } from "../../functions/api/table";
-import { Bid, Hand } from "../../functions/core";
+import {
+  TableBidRequest,
+  TableBidResponse,
+  TablePlayRequest,
+  TablePlayResponse,
+} from "../../functions/api/table";
+import { Bid, Card, Hand } from "../../functions/core";
 import { firestore, functions } from "./firebase";
 import useCallable, { HttpsCallableHook } from "./useCallable";
 import { useUserContext } from "./user";
 
 const tableConverter: FirestoreDataConverter<Table> = {
-  toFirestore(table: Table): DocumentData {
+  toFirestore(): DocumentData {
     return {};
   },
   fromFirestore(
@@ -68,6 +73,18 @@ export function useBid(tableId: string): HttpsCallableHook<Bid, void> {
   >(functions, "tablebid");
   const run = useCallback(
     (bid: Bid) => internalRun({ tableId: tableId, bid: bid.toJson() }),
+    [internalRun, tableId]
+  );
+  return [run, inProgress, error];
+}
+
+export function usePlay(tableId: string): HttpsCallableHook<Card, void> {
+  const [internalRun, inProgress, error] = useCallable<
+    TablePlayRequest,
+    TablePlayResponse
+  >(functions, "tableplay");
+  const run = useCallback(
+    (card: Card) => internalRun({ tableId: tableId, card: card.toJson() }),
     [internalRun, tableId]
   );
   return [run, inProgress, error];

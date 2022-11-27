@@ -9,17 +9,13 @@ export interface HoldingProps {
 }
 
 export function Holding({ seat }: HoldingProps) {
-  //const play = usePlay();
   const { width, hand, handAt } = useBoardContext();
-  const { playingAs } = useTableContext();
+  const { play, playingAs } = useTableContext();
   const margin = width / 13;
   const cards = handAt.getHolding(seat);
 
   const isPlayer = playingAs === seat;
   const isDummy = handAt.isDummy(seat);
-  const canControl = isDummy
-    ? playingAs === seat.partner()
-    : playingAs === seat;
 
   const paperSx = {
     [Seat.West.toString()]: {
@@ -51,13 +47,11 @@ export function Holding({ seat }: HoldingProps) {
       <Box sx={{ mr: `${margin}px` }} />
       {cards?.map((card) => (
         <PlayingCard
-          enabled={canControl && hand.canPlay(card, seat)}
+          enabled={playingAs && hand.canPlay(card, playingAs)}
           faceUp={isPlayer || isDummy}
           key={card.id}
           card={card}
-          onClick={() => {
-            /*play(card, seat)*/
-          }}
+          onClick={() => play?.(card)}
           sx={{ ml: `-${margin}px` }}
         />
       ))}

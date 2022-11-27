@@ -1,106 +1,118 @@
 import axios from "axios";
-import { firestore, logger } from "firebase-functions";
+import { logger } from "firebase-functions/v2";
+import { onMessagePublished } from "firebase-functions/v2/pubsub";
 import { Bid, Card, Hand, Seat, Suit } from "../core";
 import { db } from "./lib/firebase";
+import { robotTurn, triggerRobot } from "./lib/robot";
 import { tableConverter } from "./lib/table";
 
 const baseURL = process.env.BEN_URL;
+const fast = true;
 
-export const robot = firestore
-  .document("tables/{tableId}")
-  .onWrite(async (_, context) => {
-    const tableId = context.params.tableId;
-    logger.info("onWrite for table " + tableId);
+export const robot = onMessagePublished("robot-turn", async (event) => {
+  let tableId = "";
+  try {
+    tableId = event.data.message.json.tableId;
+  } catch (e) {
+    logger.error("PubSub message was not JSON", e);
+    throw e;
+  }
+  logger.info("robot turn for table " + tableId);
 
-    const ref = db
-      .collection("tables")
-      .withConverter(tableConverter)
-      .doc(tableId);
-    const snapshot = await ref.get();
-    if (!snapshot.exists) {
-      throw new Error("Table not found at " + tableId);
+  const ref = db
+    .collection("tables")
+    .withConverter(tableConverter)
+    .doc(tableId);
+  const snapshot = await ref.get();
+  if (!snapshot.exists) {
+    throw new Error("Table not found at " + tableId);
+  }
+
+  const table = snapshot.data();
+  if (!table) throw new Error(`table ${tableId} not found`);
+
+  const turn = robotTurn(table);
+  if (!turn) {
+    logger.info("Not Robot's turn");
+    return;
+  }
+  logger.info("Robot's turn!");
+
+  let newHand: Hand | undefined;
+  if (table.isBidding) {
+    const bid = await getBid(table);
+    newHand = table.doBid(bid, turn);
+    if (!newHand) {
+      logger.info("unable to perform bid", bid.toString());
     }
-
-    const table = snapshot.data();
-    if (!table) throw new Error(`table ${tableId} not found`);
-
-    const turn = table.turn;
-    if (!turn) {
-      logger.info("Nobody's turn");
-      return;
-    }
-
-    const turnOrDelcarer = table.isDummy(turn) ? turn.partner() : turn;
-    if (table.uids.at(turnOrDelcarer.index()) !== "Robot") {
-      logger.info("Not Robot's turn");
-      return;
-    }
-
-    logger.info("Robot's turn!");
-    let newHand: Hand | undefined;
-    if (table.isBidding) {
-      const bid = await getBid(table);
-      newHand = table.doBid(bid, turn);
+  } else if (table.isPlaying) {
+    if (!table.play.length) {
+      const card = await getLead(table);
+      newHand = table.doPlay(card, turn);
       if (!newHand) {
-        logger.info("unable to perform bid", bid.toString());
+        logger.info("unable to perform lead", card.toString());
       }
-    } else if (table.isPlaying) {
-      if (!table.play.length) {
-        const card = await getLead(table);
-        newHand = table.doPlay(card, turn);
-        if (!newHand) {
-          logger.info("unable to perform lead", card.toString());
-        }
+    } else {
+      const playable = table
+        .getHolding(turn)
+        .filter((card) => table.canPlay(card, turn));
+      let card: Card;
+      if (playable.length === 1) {
+        card = playable[0];
       } else {
-        const playable = table
-          .getHolding(turn)
-          .filter((card) => table.canPlay(card, turn));
-        let card: Card;
-        if (playable.length === 1) {
-          card = playable[0];
-        } else {
-          card = await getPlay(table);
-        }
-        newHand = table.doPlay(card, turn);
-        if (!newHand) {
-          logger.info("unable to perform play", card.toString());
-        }
+        card = await getPlay(table);
+      }
+      newHand = table.doPlay(card, turn);
+      if (!newHand) {
+        logger.info("unable to perform play", card.toString());
       }
     }
-    if (newHand) {
-      const newTable = table.updateHand(newHand);
-      await ref.set(newTable);
-      console.log("table updated with Robot moved");
-    }
-  });
+  }
+  if (newHand) {
+    const newTable = table.updateHand(newHand);
+    await ref.set(newTable);
+    await triggerRobot(newTable);
+  }
+});
 
 const getBid = async (hand: Hand) => {
+  if (fast) return Promise.resolve(new Bid("Pass"));
   const req = {
     vul: hand.vulnerability.toBen(),
     hand: getHolding(hand),
     auction: getAuction(hand),
   };
-  console.log("requesting bid", req);
+  logger.info("requesting bid", req);
   const resp = await axios.post(baseURL + "/api/bid", req);
   const data: { bid: string } = resp.data;
-  console.log("response", data);
+  logger.info("response", data);
   return new Bid(data.bid);
 };
 
 const getLead = async (hand: Hand) => {
+  if (fast) {
+    return Promise.resolve(hand.getHolding(hand.player || Seat.South)[0]);
+  }
+
   const req = {
     vul: hand.vulnerability.toBen(),
     hand: getHolding(hand),
     auction: getAuction(hand),
   };
-  console.log("requesting lead", req);
+  logger.info("requesting lead", req);
   const resp = await axios.post(baseURL + "/api/lead", req);
   const data: { card: string } = resp.data;
-  console.log("response", data);
+  logger.info("response", data);
   return Card.fromLin(data.card);
 };
 
 const getPlay = async (hand: Hand) => {
+  if (fast) {
+    const seat = hand.player || Seat.South;
+    const card = hand.getHolding(seat).find((card) => hand.canPlay(card, seat));
+    if (!card) throw new Error("no valid play");
+    return Promise.resolve(card);
+  }
   const req = {
     vul: hand.vulnerability.toBen(),
     hands: [
@@ -112,10 +124,10 @@ const getPlay = async (hand: Hand) => {
     auction: getAuction(hand),
     play: hand.play.map((c) => c.toBen()),
   };
-  console.log("requesting play", req);
+  logger.info("requesting play", req);
   const resp = await axios.post(baseURL + "/api/play", req);
   const data: { card: string } = resp.data;
-  console.log("response", data);
+  logger.info("response", data);
   return Card.fromLin(data.card);
 };
 
