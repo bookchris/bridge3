@@ -1,6 +1,6 @@
 import { Box, Paper, Typography } from "@mui/material";
 import { Seat } from "../../../functions/core";
-import { useUser } from "../../lib/user";
+import { useUser, useUserContext } from "../../lib/user";
 //import { useCurrentUser } from "../auth/auth";
 //import { useSit } from "../db/table";
 //import { useUser } from "../db/user";
@@ -14,19 +14,23 @@ export interface PlayerBoxProps {
 export function PlayerBox({ seat }: PlayerBoxProps) {
   const { table } = useTableContext();
   const { scale, handAt } = useBoardContext();
-  //const user = useCurrentUser();
-  //const sit = useSit(seat);
+  const { user, username } = useUserContext();
 
   const index = Object.values(Seat).indexOf(seat);
-  const playerId = table?.uids?.[index];
+  let playerId = table?.uids?.[index];
   const isRobot = playerId === "Robot";
-  const tableUser = useUser(playerId || "invalid");
+  if (isRobot) {
+    playerId = undefined;
+  }
+  const [tableUser] = useUser(playerId);
 
   let player = "";
   if (isRobot) {
     player = "Robot";
-    //} else if (table) {
-    //    player = tableUser?.displayName || "";
+  } else if (user && username && playerId === user?.uid) {
+    player = username;
+  } else if (tableUser) {
+    player = tableUser?.displayName || "";
   } else {
     player = handAt.players[index] || seat.toString();
   }

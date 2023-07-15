@@ -21,17 +21,19 @@ export function Play({ hand, position }: PlayProps) {
 
   const highlighted = position - hand.bidding.length;
   const tricks = [...hand.tricks];
+  const trump = hand.contract.suitBid?.suit;
+  if (!trump) throw new Error("expected contract with suit");
+  const openingLeader = hand.openingLeader;
+  if (!openingLeader) throw new Error("expected opening leader");
 
   if (hand.isPlaying) {
     if (hand.tricks.length === 0) {
-      tricks.push(
-        new Trick(hand.openingLeader!, [], hand.contract.suitBid?.suit!)
-      );
-    } else if (hand.tricks[hand.tricks.length - 1].complete) {
-      const last = hand.tricks[hand.tricks.length - 1];
-      tricks.push(
-        new Trick(last.winningSeat!, [], hand.contract.suitBid?.suit!)
-      );
+      tricks.push(new Trick(openingLeader, [], trump));
+    } else {
+      const winningSeat = hand.tricks[hand.tricks.length - 1].winningSeat;
+      if (winningSeat) {
+        tricks.push(new Trick(winningSeat, [], trump));
+      }
     }
   }
 
@@ -51,7 +53,7 @@ export function Play({ hand, position }: PlayProps) {
         </TableHead>
         <TableBody>
           {tricks.map((trick, i) => {
-            let cols = trick.cards.map((card, j) => (
+            const cols = trick.cards.map((card, j) => (
               <TableCell
                 key={card.id}
                 onClick={() => setPosition(i * 4 + j + hand.bidding.length)}

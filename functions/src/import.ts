@@ -2,7 +2,7 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { ImportHandRequest, ImportHandResponse } from "../api/import";
 import { Hand } from "../core";
 import { StoredHand } from "../storage/hand";
-import { db } from "./lib/firebase";
+import { firestore } from "./lib/firebase";
 import { handConverter } from "./lib/hand";
 
 export const importhand = onCall<
@@ -21,7 +21,7 @@ export const importhand = onCall<
   } catch (err: unknown) {
     throw new HttpsError("invalid-argument", errorToString(err));
   }
-  const ref = db.collection("hands").withConverter(handConverter).doc();
+  const ref = firestore.collection("hands").withConverter(handConverter).doc();
   await ref.set(new StoredHand(hand, { id: ref.id, uids: [uid] }));
   return { id: ref.id };
 });

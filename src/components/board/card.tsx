@@ -42,11 +42,6 @@ export function PlayingCard({
     [Orientation.Left]: { width: height, height: width },
     [Orientation.Right]: { width: height, height: width },
   };
-  const imageSxProps = {
-    [Orientation.None]: {},
-    [Orientation.Left]: { transform: "rotate(270deg)" },
-    [Orientation.Right]: { transform: "rotate(90deg)" },
-  };
   const color = cardColor(card);
   return (
     <ButtonBase
@@ -94,7 +89,6 @@ export function PlayingCard({
           width={width}
           height={height}
           src="https://upload.wikimedia.org/wikipedia/commons/6/67/Cards-Reverse.svg"
-          //sx={{ width: width, height: height, ...imageSxProps[orientation] }}
         />
       )}
     </ButtonBase>

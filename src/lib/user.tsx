@@ -1,5 +1,13 @@
 import { signInWithPopup, User } from "firebase/auth";
-import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import {
+  doc,
+  DocumentData,
+  FirestoreDataConverter,
+  getDoc,
+  onSnapshot,
+  QueryDocumentSnapshot,
+  SnapshotOptions,
+} from "firebase/firestore";
 import {
   createContext,
   ReactNode,
@@ -11,6 +19,18 @@ import {
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useDocumentData } from "react-firebase-hooks/firestore";
 import { auth, firestore, googleAuthProvider } from "./firebase";
+
+const userConverter: FirestoreDataConverter<StoredUser> = {
+  toFirestore(user: StoredUser): DocumentData {
+    return user;
+  },
+  fromFirestore(
+    snapshot: QueryDocumentSnapshot,
+    options: SnapshotOptions
+  ): StoredUser {
+    return snapshot.data(options) as StoredUser;
+  },
+};
 
 export interface StoredUser {
   username: string;
@@ -79,7 +99,9 @@ export function UserContextProvider({ children }: { children: ReactNode }) {
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }
 
-export function useUser(userId: string) {
-  const ref = userId ? doc(firestore, "users", userId) : null;
+export function useUser(userId?: string) {
+  const ref = userId
+    ? doc(firestore, "users", userId).withConverter(userConverter)
+    : null;
   return useDocumentData(ref);
 }

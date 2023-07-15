@@ -1,3 +1,4 @@
+import { ref } from "firebase/database";
 import {
   collection,
   doc,
@@ -10,6 +11,7 @@ import {
   where,
 } from "firebase/firestore";
 import { useCallback } from "react";
+import { useObjectVal } from "react-firebase-hooks/database";
 import {
   useCollectionData,
   useDocumentData,
@@ -20,8 +22,8 @@ import {
   TablePlayRequest,
   TablePlayResponse,
 } from "../../functions/api/table";
-import { Bid, Card, Hand } from "../../functions/core";
-import { firestore, functions } from "./firebase";
+import { Bid, Card, Hand, HandJson } from "../../functions/core";
+import { database, firestore, functions } from "./firebase";
 import useCallable, { HttpsCallableHook } from "./useCallable";
 import { useUserContext } from "./user";
 
@@ -44,11 +46,25 @@ const tableConverter: FirestoreDataConverter<Table> = {
   },
 };
 
-export function useTable(tableId: string) {
-  const ref = tableId
-    ? doc(firestore, "tables", tableId).withConverter(tableConverter)
-    : null;
-  return useDocumentData<Table>(ref);
+export function useTable(
+  tableId: string
+): [Table | undefined, boolean, Error | undefined] {
+  const [table, tableLoading, tableError] = useDocumentData<Table>(
+    doc(firestore, "tables", tableId).withConverter(tableConverter)
+  );
+  const [handJson, handLoading, handError] = useObjectVal<HandJson>(
+    ref(database, "tables/" + tableId)
+  );
+  if (!table) {
+    return [undefined, tableLoading, tableError];
+  }
+  if (!handJson) {
+    return [undefined, handLoading, handError];
+  }
+  const hand = Hand.fromJson(handJson);
+  const combined = table.updateHand(hand);
+
+  return [combined, false, undefined];
 }
 
 export function useTableList() {
@@ -102,5 +118,12 @@ export class Table extends Hand {
     this.id = props.id;
     this.uids = props.uids;
     this.created = props.created;
+  }
+  updateHand(hand: Hand) {
+    return new Table(hand, {
+      id: this.id,
+      uids: this.uids,
+      created: this.created,
+    });
   }
 }

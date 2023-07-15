@@ -1,4 +1,12 @@
-import { createContext, useContext, useMemo } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { useErrorHandler } from "react-error-boundary";
 import { Bid, Card, Seat, Seats } from "../../../functions/core";
 import { Table, useBid, usePlay } from "../../lib/table";
 import { useUserContext } from "../../lib/user";
@@ -19,22 +27,57 @@ export function TableContextProvider({ table }: { table: Table }) {
   const { user } = useUserContext();
   const playerIndex = table?.uids.indexOf(user?.uid || "") ?? -1;
   const playingAs = playerIndex === -1 ? undefined : Seats[playerIndex];
-  const [bid, bidInProgress, bidError] = useBid(table.id);
-  const [play, playInProgress, playError] = usePlay(table.id);
+
+  const [pre, setPre] = useState<Table>();
+  useEffect(() => {
+    if (pre && pre.positions <= table.positions) {
+      setPre(undefined);
+    }
+  }, [pre, table]);
+
+  const [bid, , bidError] = useBid(table.id);
+  useErrorHandler(bidError);
+  const preBid = useCallback(
+    async (b: Bid) => {
+      if (playingAs) {
+        const newHand = table.doBid(b, playingAs);
+        if (newHand) {
+          setPre(table.updateHand(newHand));
+          await bid(b);
+        }
+      }
+    },
+    [bid, playingAs, table]
+  );
+
+  const [play, , playError] = usePlay(table.id);
+  useErrorHandler(playError);
+  const prePlay = useCallback(
+    async (c: Card) => {
+      if (playingAs) {
+        const newHand = table.doPlay(c, playingAs);
+        if (newHand) {
+          setPre(table.updateHand(newHand));
+          await play(c);
+        }
+      }
+    },
+    [play, playingAs, table]
+  );
 
   const value: TableContextType = useMemo(
     () => ({
-      table: table,
+      table: pre || table,
       playingAs: playingAs,
-      bid: bid,
-      play: play,
+      bid: preBid,
+      play: prePlay,
     }),
-    [bid, play, playingAs, table]
+    [playingAs, pre, preBid, prePlay, table]
   );
 
   return (
     <TableContext.Provider value={value}>
-      <Board hand={table} playingAs={playingAs} live />
+      <Board hand={pre || table} playingAs={playingAs} live />
     </TableContext.Provider>
   );
 }

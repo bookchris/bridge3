@@ -1,15 +1,17 @@
 import axios from "axios";
 import { logger } from "firebase-functions/v2";
-import { onMessagePublished } from "firebase-functions/v2/pubsub";
+import { onValueWritten } from "firebase-functions/v2/database";
 import { Bid, Card, Hand, Seat, Suit } from "../core";
-import { db } from "./lib/firebase";
-import { robotTurn, triggerRobot } from "./lib/robot";
-import { tableConverter } from "./lib/table";
+import { Table } from "../storage/table";
+import { robotTurn } from "./lib/robot";
 
 const baseURL = process.env.BEN_URL;
 const fast = true;
 
-export const robot = onMessagePublished("robot-turn", async (event) => {
+//export const robot = onMessagePublished("robot-turn", async (event) => {
+export const robot = onValueWritten("/tables/{tableId}", async (event) => {
+  const tableId = event.params.tableId;
+  /*
   let tableId = "";
   try {
     tableId = event.data.message.json.tableId;
@@ -17,8 +19,16 @@ export const robot = onMessagePublished("robot-turn", async (event) => {
     logger.error("PubSub message was not JSON", e);
     throw e;
   }
+  */
   logger.info("robot turn for table " + tableId);
+  const data = event.data.after.val();
+  const hand = Hand.fromJson(data);
+  const table = new Table(hand, {
+    id: tableId,
+    uids: data.uids,
+  });
 
+  /*
   const ref = db
     .collection("tables")
     .withConverter(tableConverter)
@@ -30,6 +40,7 @@ export const robot = onMessagePublished("robot-turn", async (event) => {
 
   const table = snapshot.data();
   if (!table) throw new Error(`table ${tableId} not found`);
+  */
 
   const turn = robotTurn(table);
   if (!turn) {
@@ -70,8 +81,12 @@ export const robot = onMessagePublished("robot-turn", async (event) => {
   }
   if (newHand) {
     const newTable = table.updateHand(newHand);
-    await ref.set(newTable);
-    await triggerRobot(newTable);
+    await event.data.after.ref.set({
+      ...newTable.toJson(),
+      uids: newTable.uids,
+    });
+    //await ref.set(newTable);
+    //await triggerRobot(newTable);
   }
 });
 

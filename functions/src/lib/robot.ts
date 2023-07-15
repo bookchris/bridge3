@@ -1,4 +1,3 @@
-import { PubSub } from "@google-cloud/pubsub";
 import { Table } from "../../storage/table";
 
 export function robotTurn(table: Table) {
@@ -17,10 +16,12 @@ export function robotTurn(table: Table) {
 export async function triggerRobot(table: Table) {
   if (robotTurn(table)) {
     console.log("triggering robot");
+    /*
     const pubSubClient = new PubSub();
     await pubSubClient.topic("robot-turn").publishMessage({
       json: { tableId: table.id },
     });
+    */
   }
   console.log("not triggering robot");
 }
