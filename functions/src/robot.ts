@@ -118,7 +118,7 @@ const getLead = async (hand: Hand) => {
   const resp = await axios.post(baseURL + "/api/lead", req);
   const data: { card: string } = resp.data;
   logger.info("response", data);
-  return Card.fromLin(data.card);
+  return Card.parse(data.card);
 };
 
 const getPlay = async (hand: Hand) => {
@@ -143,7 +143,7 @@ const getPlay = async (hand: Hand) => {
   const resp = await axios.post(baseURL + "/api/play", req);
   const data: { card: string } = resp.data;
   logger.info("response", data);
-  return Card.fromLin(data.card);
+  return Card.parse(data.card);
 };
 
 const getAuction = (hand: Hand) => {

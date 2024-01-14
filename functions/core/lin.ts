@@ -32,7 +32,7 @@ export const linToHand = (data: string): Hand => {
         const hands = linHands.map((linHand) => {
           const hand: number[] = [];
           ["C", "D", "H", "S"].forEach((s) => {
-            const suit = Suit.fromLin(s);
+            const suit = Suit.parse(s);
             const start = linHand.indexOf(s) + 1;
             if (start === 0) return;
             let end = linHand.substring(start).search(/[SHDC]/) + start;
@@ -58,7 +58,7 @@ export const linToHand = (data: string): Hand => {
         break;
       }
       case "sv":
-        json.vulnerability = Vulnerability.fromLin(value).toJson();
+        json.vulnerability = Vulnerability.parse(value).toJson();
         break;
       case "mb": {
         const bid = linBidToBid(value);
@@ -69,7 +69,7 @@ export const linToHand = (data: string): Hand => {
         break;
       }
       case "pc": {
-        const suit = Suit.fromLin(value[0]);
+        const suit = Suit.parse(value[0]);
         const rank = linCardToRank(value[1]);
         if (rank === -1) {
           continue;
