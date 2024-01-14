@@ -26,7 +26,7 @@ export class Bid {
       this.bid = bid;
     } else {
       this.level = parseInt(bid[0]);
-      this.suit = Suit.fromString(bid.substring(1));
+      this.suit = Suit.parse(bid.substring(1));
       this.bid = `${this.level}${this.suit}`;
       this.index = SuitBids.indexOf(this.bid);
       if (this.index === -1) {

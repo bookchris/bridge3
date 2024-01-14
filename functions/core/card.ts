@@ -11,9 +11,9 @@ export class Card {
     this.rank = id % 13;
   }
 
-  static fromLin(value: string): Card {
-    const suit = Suit.fromLin(value[0]);
-    const rank = linCardToRank(value[1]);
+  static parse(value: string): Card {
+    const suit = Suit.parse(value[0]);
+    const rank = parseRank(value[1]);
     if (rank === -1) {
       throw new Error("Unable to parse card: " + value);
     }
@@ -54,7 +54,7 @@ export class Card {
   }
 }
 
-function linCardToRank(c: string) {
+function parseRank(c: string) {
   switch (c) {
     case "A":
       return 12;

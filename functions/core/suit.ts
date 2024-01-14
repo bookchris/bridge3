@@ -19,23 +19,11 @@ export class Suit {
     Suits.indexOf(this);
   }
 
-  public static fromString(input: string) {
+  public static parse(input: string) {
     const suit = Suits.find((s) => s.suit === input || s.alt === input);
     if (!suit) {
       throw new Error("Can't make a suit from string: " + input);
     }
-    return suit;
-  }
-
-  public static fromLin(lin: string): Suit {
-    const suit = {
-      S: Suit.Spade,
-      H: Suit.Heart,
-      D: Suit.Diamond,
-      C: Suit.Club,
-      NT: Suit.NoTrump,
-    }[lin];
-    if (!suit) throw new Error(`Invalid lin value for suit: ${lin}`);
     return suit;
   }
 }
