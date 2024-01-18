@@ -15,8 +15,12 @@ export class Suit {
     return this.alt || this.suit;
   }
 
+  toPbn() {
+    return this.alt || this.suit;
+  }
+
   index() {
-    Suits.indexOf(this);
+    return Suits.indexOf(this);
   }
 
   public static parse(input: string) {

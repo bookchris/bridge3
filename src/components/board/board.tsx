@@ -1,14 +1,15 @@
 import { Box, Paper, useMediaQuery, useTheme } from "@mui/material";
 import useSize from "@react-hook/size";
 import {
-  createContext,
   Dispatch,
   SetStateAction,
+  createContext,
   useContext,
   useMemo,
   useRef,
 } from "react";
 import { Hand, HandState, Seat } from "../../../functions/core";
+import { useDds } from "../../lib/useDds";
 import { BidBox } from "./bidBox";
 import { BiddingCard } from "./biddingCard";
 import { ContractCard } from "./contractCard";
@@ -27,6 +28,7 @@ interface BoardContextType {
   handAt: Hand;
   width: number;
   scale: number;
+  live: boolean;
 }
 
 const BoardContext = createContext({} as BoardContextType);
@@ -53,20 +55,30 @@ export function Board({ hand, live, playingAs }: BoardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [width] = useSize(ref);
 
-  const handAt = hand.atPosition(position);
+  const handAt = useMemo(() => hand.atPosition(position), [hand, position]);
+  const nextCard = useMemo(() => {
+    const next = position + 1;
+    if (next < hand.positions) {
+      const handNext = hand.atPosition(next);
+      return handNext.play.at(-1);
+    }
+  }, [hand, position]);
 
   const value = useMemo(
     () => ({
-      width: width,
+      width,
       scale: width / 900,
-      hand: hand,
-      handAt: handAt,
-      playingAs: playingAs,
-      position: position,
-      setPosition: setPosition,
+      hand,
+      handAt,
+      playingAs,
+      live: !!live,
+      position,
+      setPosition,
     }),
-    [width, hand, handAt, playingAs, position, setPosition]
+    [width, hand, handAt, playingAs, live, position, setPosition]
   );
+
+  const dds = useDds(handAt);
 
   const right = (
     <>
@@ -118,10 +130,10 @@ export function Board({ hand, live, playingAs }: BoardProps) {
                 position: "relative",
               }}
             >
-              <Holding seat={Seat.North} />
-              <Holding seat={Seat.West} />
-              <Holding seat={Seat.East} />
-              <Holding seat={Seat.South} />
+              <Holding seat={Seat.North} nextCard={nextCard} dds={dds} />
+              <Holding seat={Seat.West} nextCard={nextCard} dds={dds} />
+              <Holding seat={Seat.East} nextCard={nextCard} dds={dds} />
+              <Holding seat={Seat.South} nextCard={nextCard} dds={dds} />
               <PlayerBox seat={Seat.South} />
               <PlayerBox seat={Seat.North} />
               <PlayerBox seat={Seat.East} />
@@ -165,10 +177,15 @@ export function Board({ hand, live, playingAs }: BoardProps) {
 
 export interface MiniBoardProps {
   hand: Hand;
+  live?: boolean;
   onClick?: () => void;
 }
 
-export function MiniBoard({ hand, onClick = () => null }: MiniBoardProps) {
+export function MiniBoard({
+  hand,
+  live,
+  onClick = () => null,
+}: MiniBoardProps) {
   const width = 250;
   const value = useMemo(
     () => ({
@@ -178,8 +195,9 @@ export function MiniBoard({ hand, onClick = () => null }: MiniBoardProps) {
       handAt: hand,
       position: hand.positions,
       setPosition: () => null,
+      live: !!live,
     }),
-    [width, hand]
+    [hand, live]
   );
 
   return (
