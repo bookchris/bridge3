@@ -33,7 +33,14 @@ export const usePosition = (hand: Hand) => {
       navigate(location.pathname, { state: newState, replace: true });
       //push({ pathname: pathname, query: newQuery });
     },
-    [hand, position, table?.id]
+    [
+      hand.positions,
+      location.pathname,
+      location.state,
+      navigate,
+      position,
+      table?.id,
+    ]
   );
   return { position: position, setPosition: setPosition };
 };

@@ -26,13 +26,17 @@ export interface PlayingCardProps extends ButtonBaseProps {
   orientation?: Orientation;
   enabled?: boolean;
   faceUp?: boolean;
+  selected?: boolean;
+  dds?: number;
 }
 
 export function PlayingCard({
   card,
   enabled,
+  selected,
   orientation = Orientation.None,
   faceUp,
+  dds,
   onClick,
   ...paperProps
 }: PlayingCardProps) {
@@ -53,7 +57,7 @@ export function PlayingCard({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "white",
+        backgroundColor: selected ? "grey.300" : "white",
         fontSize: width / 6,
         borderRadius: 2,
         boxShadow: 1,
@@ -69,6 +73,7 @@ export function PlayingCard({
             <CornerText sx={{ color: color }}>
               {card.suit.toString()}
             </CornerText>
+            {dds !== undefined && <DdsText>{dds}</DdsText>}
           </Box>
           <Box
             sx={{
@@ -100,6 +105,13 @@ const CornerText = styled("div")({
   fontFamily: "'Roboto Slab', serif;",
   lineHeight: 0.8,
   width: "1em",
+  textAlign: "center",
+  transform: "translate(-50%, 0);",
+});
+
+const DdsText = styled("div")({
+  width: "1em",
+  marginTop: "8px",
   textAlign: "center",
   transform: "translate(-50%, 0);",
 });

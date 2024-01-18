@@ -24,6 +24,7 @@ export function TableCard({ table, ...cardProps }: TableCardProps) {
       <Box sx={{ display: "flex" }}>
         {sm && (
           <MiniBoard
+            live
             hand={table}
             onClick={() => navigate("/tables/" + table.id)}
           />
