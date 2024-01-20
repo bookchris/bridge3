@@ -19,6 +19,7 @@ import { Play } from "./playCard";
 import { PlayerBox } from "./playerBox";
 import { usePosition } from "./position";
 import { ScoreBox } from "./scoreBox";
+import { ScoreGraph } from "./scoreGraph";
 import { Trick } from "./trick";
 
 interface BoardContextType {
@@ -146,6 +147,13 @@ export function Board({ hand, live, playingAs }: BoardProps) {
                 <ScoreBox hand={handAt} />
               )}
             </Paper>
+            {!live && (
+              <ScoreGraph
+                hand={hand}
+                position={position}
+                setPosition={setPosition}
+              />
+            )}
             {!isLg && right}
           </Box>
           {isLg && (

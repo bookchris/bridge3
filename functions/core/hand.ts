@@ -173,6 +173,14 @@ export class Hand {
     ).length;
   }
 
+  get declarerTricks() {
+    return this.tricks.filter(
+      (t) =>
+        t.winningSeat === this.contract.declarer ||
+        t.winningSeat === this.contract.declarer?.partner()
+    );
+  }
+
   get result() {
     if (this.state !== HandState.Complete || !this.contract.suitBid?.level) {
       return 0;
